@@ -97,6 +97,7 @@ fun ListItem(
                 Row(horizontalArrangement = Arrangement.SpaceBetween) {
                     var quantity by remember { mutableStateOf(listitem.quant) }
                     Text("Quantity:")
+
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Minus",

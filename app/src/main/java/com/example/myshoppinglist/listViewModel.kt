@@ -1,46 +1,24 @@
 package com.example.myshoppinglist
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.saveable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 
 class listViewModel(
-    private val repository: DataRepository = Graph.DataRepository,
+    private val repository: DataRepository = Graph.DataRepository
 ): ViewModel(){
 
-    var ListName by mutableStateOf("")
 
-    var ListQuant by mutableStateOf("")
 
-    var ListPurchased by mutableStateOf(false)
-
-    fun onListNameChange(newString: String){
-        ListName =newString
-    }
-    fun onListQuantChange(newString:String){
-        ListQuant=newString
-    }
-
-    fun onListPurchasedChange(newBoolean:Boolean){
-        ListPurchased=newBoolean
-    }
-
-//    lateinit var getAllWishes : Flow<List<ListEntity>>
-//
-//    init {
-//        viewModelScope.launch(Dispatchers.IO) {
-//            getAllWishes = repository.getAllList()
-//        }
-//    }
     val getAllWishes: StateFlow<List<ListEntity>> = repository.getAllList()
         .stateIn(
             scope = viewModelScope,

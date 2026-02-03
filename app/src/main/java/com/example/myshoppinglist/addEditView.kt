@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -51,18 +52,17 @@ fun AddEditScreen(
 ){
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var ListName by rememberSaveable { mutableStateOf("") }
+    var ListQuant by rememberSaveable { mutableStateOf("") }
+    var ListPurchased by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(id) {
         if(id != 0L) {
             viewModel.getListById(id).collect { wish ->
-                viewModel.ListName = wish.name
-                viewModel.ListQuant = wish.quant.toString()
-                viewModel.ListPurchased = wish.purchased
+                ListName = wish.name
+                ListQuant = wish.quant.toString()
+                ListPurchased = wish.purchased
             }
-        } else {
-            viewModel.ListName = ""
-            viewModel.ListQuant = ""
-            viewModel.ListPurchased = false
         }
     }
 
@@ -82,58 +82,57 @@ fun AddEditScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            var name by rememberSaveable() { mutableStateOf("") }
-            name=viewModel.ListName
+
             Spacer(modifier = Modifier.height(10.dp))
             WishTextField(
                 label = "Name",
-                value = name,
+                value = ListName,
                 onValueChanged = {
-                    viewModel.onListNameChange(it)
+                    ListName = it
                 }
             )
             Spacer(modifier = Modifier.height(10.dp))
             if(id==0L){
             WishTextField(
                 label = "Quantity",
-                value = viewModel.ListQuant,
+                value = ListQuant,
                 onValueChanged = {
-                    viewModel.onListQuantChange(it)
+                    ListQuant = it
                 }
             )}
             else{
                 val listitem by viewModel.getListById(id).collectAsState(initial = null)
                 listitem?.let { ListQuantField( it,onValueChanged = {
-                    viewModel.onListQuantChange(it)
+                   ListQuant=it
                 }) }
             }
             Spacer(modifier = Modifier.height(10.dp))
             wishPurchaseField(
                 label = "Purchased",
-                value = viewModel.ListPurchased,
+                value = ListPurchased,
                 onValueChanged = {
-                    viewModel.onListPurchasedChange(it)
+                    ListPurchased = it
                 }
             )
 
             Button(onClick = {
-                if(viewModel.ListName.isNotEmpty() && (viewModel.ListQuant.isNotEmpty() && viewModel.ListQuant.toInt()>0)) {
+                if(ListName.isNotEmpty() && (ListQuant.isNotEmpty() && ListQuant.toInt()>0)) {
                     if (id != 0L) {
                         viewModel.updateWish(
                             ListEntity(
                                 id = id,
-                                name = viewModel.ListName.trim(),
-                                quant = viewModel.ListQuant.trim().toInt(),
-                                purchased = viewModel.ListPurchased,
+                                name = ListName.trim(),
+                                quant = ListQuant.trim().toInt(),
+                                purchased = ListPurchased,
                                 createdAt = System.currentTimeMillis()
                             )
                         )
                     } else {
                         viewModel.add(
                             ListEntity(
-                                name = viewModel.ListName.trim(),
-                                quant = viewModel.ListQuant.trim().toInt(),
-                                purchased = viewModel.ListPurchased,
+                                name = ListName.trim(),
+                                quant = ListQuant.trim().toInt(),
+                                purchased = ListPurchased,
                                 createdAt = System.currentTimeMillis()
                             )
                         )
@@ -157,7 +156,7 @@ fun ListQuantField(
     onValueChanged: (String) -> Unit
 ){
     Row(modifier=Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        var quantity by remember { mutableStateOf(listitem.quant) }
+        var quantity by rememberSaveable() { mutableStateOf(listitem.quant) }
         Text("Quantity:")
         Icon(
             Icons.AutoMirrored.Filled.ArrowBack,
