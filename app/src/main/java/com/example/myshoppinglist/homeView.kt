@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
@@ -16,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.material3.Scaffold
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -47,7 +50,7 @@ fun HomeView(
                 Icon(Icons.Default.Add, contentDescription = "Add Wish")
             }
         }
-    ) { paddingValues ->
+            ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -55,13 +58,15 @@ fun HomeView(
         ) {
             items(wishes, key = { it.id }) { wish ->
                 ListItem(
+                    wish.id,
                     listitem = wish,
                     onClick = {
                         navController.navigate(Screens.AddEditScreen.route + "/${wish.id}")
                     },
                     onDelete = {
                         viewModel.delete(wish)
-                    }
+                    },
+                    viewModel
                 )
             }
         }
@@ -69,9 +74,11 @@ fun HomeView(
 }
 @Composable
 fun ListItem(
+    id:Long,
     listitem: ListEntity,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    viewModel: listViewModel
 ) {
     Card(
         modifier = Modifier
@@ -87,7 +94,50 @@ fun ListItem(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = listitem.name, style = MaterialTheme.typography.titleMedium)
-                Text(text = "Quantity: ${listitem.quant}", style = MaterialTheme.typography.bodyMedium)
+                Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                    var quantity by remember { mutableStateOf(listitem.quant) }
+                    Text("Quantity:")
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Minus",
+                        modifier = Modifier.padding(horizontal = 8.dp).clickable {
+                            if (quantity > 0) {
+                                quantity--
+                                viewModel.updateWish(
+                                    ListEntity(
+                                        id = id,
+                                        name = listitem.name,
+                                        quant = quantity,
+                                        purchased = listitem.purchased,
+                                        createdAt = System.currentTimeMillis()
+                                    )
+                                )
+                            }
+                        })
+                    Text(
+                        text = "${quantity}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Add",
+                        modifier = Modifier.padding(horizontal = 8.dp).clickable {
+                            quantity++
+
+                            viewModel.updateWish(
+                                ListEntity(
+                                    id = id,
+                                    name = listitem.name,
+                                    quant = quantity,
+                                    purchased = listitem.purchased,
+                                    createdAt = System.currentTimeMillis()
+                                )
+                            )
+                        }
+                    )
+
+                }
                 Text(text = "Purchased: ${(listitem.purchased)}", style = MaterialTheme.typography.bodyMedium)
                 val createdAt = Instant.fromEpochMilliseconds(listitem.createdAt)
                 val now = Clock.System.now()

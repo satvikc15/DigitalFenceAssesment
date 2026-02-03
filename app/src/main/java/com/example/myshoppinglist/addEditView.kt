@@ -1,5 +1,6 @@
 package com.example.myshoppinglist
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,18 +10,28 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,8 +51,7 @@ fun AddEditScreen(
 ){
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    
-    // Load existing item data when editing
+
     LaunchedEffect(id) {
         if(id != 0L) {
             viewModel.getListById(id).collect { wish ->
@@ -55,7 +65,7 @@ fun AddEditScreen(
             viewModel.ListPurchased = false
         }
     }
-    
+
     Scaffold(
         topBar = {
             AppBarView(
@@ -72,33 +82,42 @@ fun AddEditScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            var name by rememberSaveable() { mutableStateOf("") }
+            name=viewModel.ListName
             Spacer(modifier = Modifier.height(10.dp))
             WishTextField(
-                label = "Name", 
-                value = viewModel.ListName, 
+                label = "Name",
+                value = name,
                 onValueChanged = {
                     viewModel.onListNameChange(it)
                 }
             )
             Spacer(modifier = Modifier.height(10.dp))
+            if(id==0L){
             WishTextField(
                 label = "Quantity",
-                value = viewModel.ListQuant, 
+                value = viewModel.ListQuant,
                 onValueChanged = {
                     viewModel.onListQuantChange(it)
                 }
-            )
+            )}
+            else{
+                val listitem by viewModel.getListById(id).collectAsState(initial = null)
+                listitem?.let { ListQuantField( it,onValueChanged = {
+                    viewModel.onListQuantChange(it)
+                }) }
+            }
             Spacer(modifier = Modifier.height(10.dp))
             wishPurchaseField(
                 label = "Purchased",
-                value = viewModel.ListPurchased, 
+                value = viewModel.ListPurchased,
                 onValueChanged = {
                     viewModel.onListPurchasedChange(it)
                 }
             )
 
             Button(onClick = {
-                if(viewModel.ListName.isNotEmpty() && viewModel.ListQuant.isNotEmpty()) {
+                if(viewModel.ListName.isNotEmpty() && (viewModel.ListQuant.isNotEmpty() && viewModel.ListQuant.toInt()>0)) {
                     if (id != 0L) {
                         viewModel.updateWish(
                             ListEntity(
@@ -131,7 +150,41 @@ fun AddEditScreen(
         }
     }
 }
+@Composable
+fun ListQuantField(
 
+    listitem: ListEntity,
+    onValueChanged: (String) -> Unit
+){
+    Row(modifier=Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        var quantity by remember { mutableStateOf(listitem.quant) }
+        Text("Quantity:")
+        Icon(
+            Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = "Minus",
+            modifier = Modifier.padding(horizontal = 8.dp).clickable {
+                if (quantity > 0) {
+                    quantity--
+                    onValueChanged(quantity.toString())
+                }
+            })
+        Text(
+            text = "${quantity}",
+            style = MaterialTheme.typography.bodyMedium
+        )
+
+        Icon(
+            Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = "Add",
+            modifier = Modifier.padding(horizontal = 8.dp).clickable {
+                quantity++
+                onValueChanged(quantity.toString())
+
+            }
+        )
+
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WishTextField(
@@ -139,6 +192,7 @@ fun WishTextField(
     value:String,
     onValueChanged :(String)->Unit
 ){
+
     OutlinedTextField(
         value=value,
         onValueChange=onValueChanged,

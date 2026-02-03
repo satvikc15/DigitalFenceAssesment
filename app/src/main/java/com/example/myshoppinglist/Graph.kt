@@ -11,7 +11,7 @@ object Graph {
     }
     fun provide(context: Context) {
         database = Room.databaseBuilder(
-            context.applicationContext,
+            context,
             Database::class.java,
             "shopping_database.db"
         ).build()
